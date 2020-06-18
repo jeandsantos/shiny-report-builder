@@ -1,0 +1,88 @@
+---
+title: "Untitled"
+author: "Jean Dos Santos"
+date: "18/06/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+x <- seq(-5,5,0.01)
+y1 <- dnorm(x)
+y2 <- dnorm(x, mean = 3, 2)
+y3 <- dnorm(x, mean = -3, 0.5)
+x <- x+5
+
+y <- y1+y2+y3
+plot(x, y)
+```
+
+
+
+```{r}
+# df <- data.frame(x, y)
+df <- data.frame(t(y))
+colnames(df) <- as.character(round(x, 2))
+df
+
+
+write.csv(df, file="data.csv", row.names = FALSE)
+```
+
+```{r}
+# install.packages("tidyverse")
+library(tidyverse)
+
+df <- read.csv(file="data.csv")
+
+vals <- as.numeric(df[1,])
+# summary(vals)
+
+(summary_stats <- data.frame(
+  mean = mean(as.numeric(df[1,]), na.rm = TRUE),
+  median = median(as.numeric(df[1,]), na.rm = TRUE),
+  min = min(as.numeric(df[1,]), na.rm = TRUE),
+  max = max(as.numeric(df[1,]), na.rm = TRUE)
+))
+  
+  
+```
+
+
+
+
+```{r}
+data.frame(`Mean` = mean(df[1,], na.rm = TRUE),
+      `Max` = min(df[1,], na.rm = TRUE),
+      `Min` = max(df[1,], na.rm = TRUE)
+      )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
