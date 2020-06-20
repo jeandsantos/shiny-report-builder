@@ -2,7 +2,12 @@
 title: "Untitled"
 author: "Jean Dos Santos"
 date: "18/06/2020"
-output: html_document
+output: 
+  pdf_document: 
+    toc: yes
+    number_sections: yes
+  word_document: 
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -11,10 +16,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r}
-x <- seq(-5,5,0.01)
+x <- seq(-10,15,0.01)
 y1 <- dnorm(x)
 y2 <- dnorm(x, mean = 3, 2)
-y3 <- dnorm(x, mean = -3, 0.5)
+y3 <- dnorm(x, mean = -2, 0.5)
 x <- x+5
 
 y <- y1+y2+y3

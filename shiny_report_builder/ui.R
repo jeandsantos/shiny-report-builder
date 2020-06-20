@@ -1,25 +1,4 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
 library(shiny)
-
-# report_path <- tempfile(fileext = ".Rmd")
-# file.copy("report.Rmd", report_path, overwrite = TRUE)
-# 
-# render_report <- function(input, output, params) {
-#     rmarkdown::render(input,
-#                       output_file = output,
-#                       params = params,
-#                       envir = new.env(parent = globalenv())
-#     )
-# }
-
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
@@ -44,37 +23,40 @@ shinyUI(fluidPage(
             tags$hr(),
             
             # Input: Checkbox if file has header ----
-            checkboxInput("header", "Header", TRUE),
+            checkboxInput(inputId = "contains_header", 
+                          label = "Files container header", 
+                          value = TRUE),
             
             # Input: Select separator ----
-            radioButtons("sep", "Separator",
+            radioButtons(inputId = "sep", 
+                         label = "Separator",
                          choices = c(Comma = ",",
                                      Semicolon = ";",
                                      Tab = "\t"),
                          selected = ","),
             
             # Input: Select quotes ----
-            radioButtons("quote", "Quote",
+            radioButtons(inputId = "quote", 
+                         label = "Quote",
                          choices = c(None = "",
                                      "Double Quote" = '"',
                                      "Single Quote" = "'"),
                          selected = '"'),
             
-            # Horizontal line ----
-            tags$hr(),
+            # Input: Report format ----
+            radioButtons('format', 'Document format', c('pdf', 'docx', 'html'),
+                         inline = FALSE), 
             
-            # Input: Select number of rows to display ----
-            radioButtons("disp", "Display",
-                         choices = c(Head = "head",
-                                     All = "all"),
-                         selected = "head"),
+            # # Horizontal line ----
+            # tags$hr(),
             
-            
-            actionButton("run_analysis", "Run Analysis", width = "170px", icon = icon("bullseye")), br(),br(),
+            actionButton(inputId = "run_analysis", label = "Run Analysis", width = "170px", icon = icon("bullseye")), br(),br(),
             
             # Button
-            downloadButton("downloadData", "Export Data"), br(),
-            downloadButton("report", "Generate report")
+            downloadButton("downloadData", "Export Data"), br(), br(),
+            downloadButton('downloadReport', "Generate Report"),
+            # textInput(inputId = "report_author", label = "Report Author", value = "")
+            
             
         ),
         
@@ -82,11 +64,8 @@ shinyUI(fluidPage(
         mainPanel(
             
             # Output: Data file ----
-            tableOutput("contents"),
             DT::dataTableOutput(outputId = "input_DT_data_table"),
-            # tableOutput("stats_table")
-            
-            shiny::plotOutput("plot_line")
+            shiny::plotOutput(outputId = "plot_line")
             
         )
         
