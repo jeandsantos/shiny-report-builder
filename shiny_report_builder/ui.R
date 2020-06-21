@@ -19,9 +19,6 @@ shinyUI(fluidPage(
                                  "text/comma-separated-values,text/plain",
                                  ".csv")),
             
-            # Horizontal line ----
-            tags$hr(),
-            
             # Input: Checkbox if file has header ----
             checkboxInput(inputId = "contains_header", 
                           label = "Files container header", 

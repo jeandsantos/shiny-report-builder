@@ -2,11 +2,11 @@ library(shiny)
 library(rmarkdown)
 library(bookdown)
 library(tidyverse)
+library(pracma)
 library(knitr)
 
 report_path <- tempfile(fileext = ".Rmd")
 file.copy("report.Rmd", report_path, overwrite = TRUE)
-
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
@@ -24,7 +24,6 @@ shinyServer(function(input, output, session) {
     
     # Print input table
     # output$contents <- renderTable({ df() })
-    
 
     summary_stats <- reactive({
         

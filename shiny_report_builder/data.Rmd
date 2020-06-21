@@ -15,28 +15,43 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+# Generate sample data
+
 ```{r}
-x <- seq(-10,15,0.01)
+# Generate sample data from n gaussian distributions
+x <- seq(-10,15,0.05)
 y1 <- dnorm(x)
 y2 <- dnorm(x, mean = 3, 2)
 y3 <- dnorm(x, mean = -2, 0.5)
-x <- x+5
+# x <- x + abs(min(x))
+x <- seq(0, 1000, length.out = length(x))
 
 y <- y1+y2+y3
-plot(x, y)
+
+# add noise
+n <- runif(length(x), 0, 0.015)
+y <- y + n
+
+y_test <- (y/sum(y))*100
+
+plot(x, y_test, type="l")
+
+df_transp <- data.frame(x,y_test)
+
+write.csv(df_transp, file = "data_transposed.csv")
 ```
-
-
 
 ```{r}
 # df <- data.frame(x, y)
-df <- data.frame(t(y))
+df <- data.frame(t(y_test))
 colnames(df) <- as.character(round(x, 2))
 df
 
 
 write.csv(df, file="data.csv", row.names = FALSE)
 ```
+
+# Compute summary statistics
 
 ```{r}
 # install.packages("tidyverse")
@@ -51,21 +66,291 @@ vals <- as.numeric(df[1,])
   mean = mean(as.numeric(df[1,]), na.rm = TRUE),
   median = median(as.numeric(df[1,]), na.rm = TRUE),
   min = min(as.numeric(df[1,]), na.rm = TRUE),
-  max = max(as.numeric(df[1,]), na.rm = TRUE)
+  max = max(as.numeric(df[1,]), na.rm = TRUE),
+  count = length(df[1,])
 ))
   
   
 ```
 
+# Deconvolution of peaks
+
+
+```{r}
+# y_test
+data_range <- range(x)
+
+relative_area <- 1
+peak_value <- 500
+standard_dev <- 5
+
+plot(x, y_test, type="l")
+plot(x, vec, type="l")
+
+
+loss <- function(relative_area, standard_dev, peak_value, target=y_test){
+  
+  vec <- relative_area*dnorm(x, peak_value, standard_dev)
+  
+    
+  # elems_matrix <- matrix(data = rep(NA, peaks*length(target)), ncol = peaks)
+  # elems_matrix[,i] <- relative_area[i]*dnorm(x, peak_value[i], standard_dev[i])
+  #
+  # for (i in 1:peaks){
+  #   # print(i)
+  #   # print(peak_value[i])
+  #   nam <- paste0("element", i)
+  #   assign(nam, relative_area[i]*dnorm(x, peak_value[i], standard_dev[i]))
+  #   elems_matrix[,i] <- relative_area[i]*dnorm(x, peak_value[i], standard_dev[i])
+  #
+  # }
+
+  # elems_matrix <- matrix(data = c(element1, element2, element3, element4, element5), ncol = peaks)
+  # elems_total <- apply(elems_matrix, MARGIN = 1, sum, na.rm=FALSE)
+  
+  sum_sq_error <- sum((target - vec)^2)
+  return(-sum_sq_error)
+
+}
+
+loss(relative_area = 0, standard_dev = 50, peak_value = 350)
+
+set.seed(1)
+# optim(par = c())
+(results <- de(type = "real-valued", 
+              fitness = function(x) loss(x[1], x[2], x[3]),
+              # peaks = 1,
+              # target = y,
+              lower = c(0, 0, 0),
+              upper = c(1000, 1000, 1000),
+              popSize = 50, 
+              pcrossover = 0.8, 
+              pmutation = 0.1, 
+              maxiter = 1000,
+              run = 50,
+              names = c("relative_area", "standard_dev", "peak_value"),
+              parallel = TRUE,
+              optim = TRUE,
+              monitor = FALSE,
+              seed = 1
+              ))
+
+results@solution
+```
 
 
 
 ```{r}
-data.frame(`Mean` = mean(df[1,], na.rm = TRUE),
-      `Max` = min(df[1,], na.rm = TRUE),
-      `Min` = max(df[1,], na.rm = TRUE)
-      )
+data_range <- range(x)
+n_peaks <- 5
+relative_area <- rep(1, n_peaks)
+standard_dev <- rep(5, n_peaks)
+peak_value <- runif(n_peaks, data_range[1], data_range[2])
+
+max_iter <- 1000
+
+areas <- rep(NA, n_peaks)
+std_devs <- rep(NA, n_peaks)
+peak_vals <- rep(NA, n_peaks)
+
+# y
+peaks <- 1
+
+loss <- function(relative_areas, standard_dev, peak_value, peaks=1, target=y){
+  
+  # elems_matrix <- matrix(data = rep(NA, peaks*length(target)), ncol = peaks)
+  # elems_matrix[,i] <- relative_area[i]*dnorm(x, peak_value[i], standard_dev[i])
+  # 
+  # for (i in 1:peaks){
+  #   # print(i)
+  #   # print(peak_value[i])
+  #   nam <- paste0("element", i)
+  #   assign(nam, relative_area[i]*dnorm(x, peak_value[i], standard_dev[i]))
+  #   elems_matrix[,i] <- relative_area[i]*dnorm(x, peak_value[i], standard_dev[i])
+  #   
+  # }
+  
+  # elems_matrix <- matrix(data = c(element1, element2, element3, element4, element5), ncol = peaks)
+  # elems_total <- apply(elems_matrix, MARGIN = 1, sum, na.rm=FALSE)
+  
+  sq_error <- (target - relative_area[i]*dnorm(x, peak_value[i], standard_dev[i]))^2
+  sum_sq_error <- sum(sq_error)
+  return(sum_sq_error)
+
+}
+
+# loss(relative_areas = 0, standard_dev = 110000, peak_value = 0)
+
+set.seed(1)
+# optim(par = c())
+(results <- ga(type = "real-valued", 
+              fitness = function(x) loss(x[1], x[2], x[3]),
+              # peaks = 1,
+              # target = y,
+              lower = c(10, 1, 500),
+              upper = c(1, 100, 0.01),
+              seed = 1
+              ))
+
+
 ```
+
+
+```{r}
+# y_test
+data_range <- range(x)
+
+loss_multi_peak <- function(rel_area1, rel_area2, rel_area3, rel_area4, rel_area5, 
+                 std_dev1, std_dev2, std_dev3, std_dev4, std_dev5, 
+                 peak1, peak2, peak3, peak4, peak5, target, vals, n_peaks){
+  
+  relative_area <- c(rel_area1, rel_area2, rel_area3, rel_area4, rel_area5)
+  standard_dev <- c(std_dev1, std_dev2, std_dev3, std_dev4, std_dev5)
+  peak_value <- c(peak1, peak2, peak3, peak4, peak5)
+  
+  elems_matrix <- matrix(data = rep(NA, n_peaks*length(target)), ncol = n_peaks)
+  
+  for (i in 1:n_peaks){
+    
+    elems_matrix[,i] <- relative_area[i]*dnorm(x, peak_value[i], standard_dev[i])
+
+  }
+
+  elems_total <- apply(elems_matrix, MARGIN = 1, sum, na.rm=FALSE)
+  
+  sum_sq_error <- sum((target - elems_total)^2)
+  return(-sum_sq_error)
+
+}
+
+set.seed(1)
+(results <- ga(type = "real-valued", 
+              fitness = function(x) loss_multi_peak(x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[12], x[13], x[14], x[15], target = y_test,  vals = x, n_peaks = 5),
+              lower = rep(0, 15),
+              upper = rep(1000,15),
+              popSize = 50, 
+              pcrossover = 0.8,
+              pmutation = 0.1, 
+              maxiter = 1000,
+              run = 50,
+              names = c(paste0(rep("rel_area",5),1:5), paste0(rep("std_dev",5),1:5), paste0(rep("peak",5),1:5)),
+              parallel = TRUE,
+              optim = TRUE,
+              monitor = FALSE,
+              seed = 1
+              ))
+
+(solution <- data.frame(results@solution))
+
+plot(results)
+```
+
+
+## Analyse Results
+
+```{r}
+plot(x, y_test, type="l")
+```
+
+
+```{r}
+rel_area <- solution %>% dplyr::select(contains("rel_area")) %>% as.matrix() %>% .[1,]
+std_dev <- solution %>% dplyr::select(contains("std_dev")) %>% as.matrix() %>% .[1,]
+peak <- solution %>% dplyr::select(contains("peak")) %>% as.matrix() %>% .[1,]
+
+solution_df <- tibble::tibble(peak, rel_area, std_dev) %>% arrange(peak) %>% mutate(ID = 1:length(peak), vec = rep(NA, length(peak)))
+vec_list <- list()
+x_list <- list()
+elems_matrix <- matrix(rep(NA,length(peak)*length(x)), ncol = length(peak))
+
+
+for (i in 1:length(peak)){
+  
+  # nam <- paste0("element", i)
+  vec <- rel_area[i]*dnorm(x, peak[i], std_dev[i])
+  vec_list[[i]] <- vec
+  x_list[[i]] <- x
+  elems_matrix[,i] <- vec
+  # assign(nam, vec)
+  
+}
+
+df_transp$y_pred <- apply(elems_matrix, MARGIN = 1, sum, na.rm=TRUE)
+
+solution_tbl <- tibble(peak, rel_area, std_dev, curve = vec_list, x = x_list) %>% arrange(desc(rel_area), peak) %>% mutate(ID = 1:length(peak)) %>% 
+  mutate(perc_total_area = (rel_area/sum(rel_area))*100) %>% dplyr::select(ID, peak, everything())
+solution_tbl
+```
+
+
+```{r}
+max_peaks <- 3
+
+ggplot() +
+  geom_polygon(data = solution_tbl %>% unnest(curve, x), mapping = aes(x=x, y=curve, fill=factor(ID)), alpha=0.2) +
+  # geom_vline(data = solution_tbl %>% unnest(curve, x), mapping = aes(xintercept = peak, fill=factor(ID)), alpha=0.2) +
+  geom_line(data=df_transp, aes(x=x, y=y_test, ID=factor(0)), fill="black", col="black", alpha=0.5) +
+  geom_polygon(data=df_transp, aes(x=x, y=y_pred, ID=factor(0)), fill="black", col="black", alpha=0.05) +
+  theme_bw() +
+  labs(x="Size", y="Value", fill="Peak") +
+  scale_fill_brewer(type = "qual", palette = "Set1")
+```
+
+
+
+```{r}
+library(pracma)
+
+solution_tbl %>% 
+  unnest(curve, x) %>% 
+  dplyr::select(ID, x, curve) %>% 
+  spread(key="ID", value = "curve") %>% 
+  summarise(trapz1 = cumtrapz(x,`1`),
+            trapz2 = cumtrapz(x,`2`),
+            trapz3 = cumtrapz(x,`3`),
+            trapz4 = cumtrapz(x,`4`),
+            trapz5 = cumtrapz(x,`5`))
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
