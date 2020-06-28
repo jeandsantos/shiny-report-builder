@@ -1,0 +1,283 @@
+---
+title: "utils"
+author: "Jean Dos Santos"
+date: "26/06/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+loss_1_peak <- function(rel_area1, std_dev1, peak1, target, vals, n_peaks=1){
+  
+  relative_area <- rel_area1
+  standard_dev <- std_dev1
+  peak_value <- peak1
+  
+  elems_matrix <- matrix(data = rep(NA, n_peaks*length(target)), ncol = n_peaks)
+  
+  for (i in 1:n_peaks){
+    elems_matrix[,i] <- relative_area[i]*dnorm(x, peak_value[i], standard_dev[i])
+  }
+
+  elems_total <- apply(elems_matrix, MARGIN = 1, sum, na.rm=FALSE)
+  return(- sum((target - elems_total)^2))
+}
+```
+
+```{r}
+loss_2_peak <- function(rel_area1, rel_area2, std_dev1, std_dev2, peak1, peak2, target, vals, n_peaks=2){
+  
+  relative_area <- c(rel_area1, rel_area2)
+  standard_dev <- c(std_dev1, std_dev2)
+  peak_value <- c(peak1, peak2)
+  
+  elems_matrix <- matrix(data = rep(NA, n_peaks*length(target)), ncol = n_peaks)
+  
+  for (i in 1:n_peaks){
+    elems_matrix[,i] <- relative_area[i]*dnorm(x, peak_value[i], standard_dev[i])
+  }
+
+  elems_total <- apply(elems_matrix, MARGIN = 1, sum, na.rm=FALSE)
+  return(- sum((target - elems_total)^2))
+
+}
+```
+
+```{r}
+loss_3_peak <- function(rel_area1, rel_area2, rel_area3, std_dev1, std_dev2, std_dev3, peak1, peak2, peak3, target, vals, n_peaks=3){
+  
+  relative_area <- c(rel_area1, rel_area2, rel_area3)
+  standard_dev <- c(std_dev1, std_dev2, std_dev3)
+  peak_value <- c(peak1, peak2, peak3)
+  
+  elems_matrix <- matrix(data = rep(NA, n_peaks*length(target)), ncol = n_peaks)
+  
+  for (i in 1:n_peaks){ 
+    elems_matrix[,i] <- relative_area[i]*dnorm(x, peak_value[i], standard_dev[i])
+    }
+
+  elems_total <- apply(elems_matrix, MARGIN = 1, sum, na.rm=FALSE)
+  return(- sum((target - elems_total)^2))
+
+}
+```
+
+
+```{r}
+loss_4_peak <- function(rel_area1, rel_area2, rel_area3, rel_area4, std_dev1, std_dev2, std_dev3, std_dev4, peak1, peak2, peak3, peak4, target, vals, n_peaks=4){
+  
+  relative_area <- c(rel_area1, rel_area2, rel_area3, rel_area4)
+  standard_dev <- c(std_dev1, std_dev2, std_dev3, std_dev4)
+  peak_value <- c(peak1, peak2, peak3, peak4)
+  
+  elems_matrix <- matrix(data = rep(NA, n_peaks*length(target)), ncol = n_peaks)
+  
+  for (i in 1:n_peaks){ 
+    elems_matrix[,i] <- relative_area[i]*dnorm(x, peak_value[i], standard_dev[i])
+    }
+
+  elems_total <- apply(elems_matrix, MARGIN = 1, sum, na.rm=FALSE)
+  return(- sum((target - elems_total)^2))
+
+}
+```
+
+
+```{r}
+loss_multi_peak <- function(rel_area1, rel_area2, rel_area3, rel_area4, rel_area5, 
+                 std_dev1, std_dev2, std_dev3, std_dev4, std_dev5, 
+                 peak1, peak2, peak3, peak4, peak5, target, vals, n_peaks){
+  
+  relative_area <- c(rel_area1, rel_area2, rel_area3, rel_area4, rel_area5)
+  standard_dev <- c(std_dev1, std_dev2, std_dev3, std_dev4, std_dev5)
+  peak_value <- c(peak1, peak2, peak3, peak4, peak5)
+  
+  elems_matrix <- matrix(data = rep(NA, n_peaks*length(target)), ncol = n_peaks)
+  
+  for (i in 1:n_peaks){
+    elems_matrix[,i] <- relative_area[i]*dnorm(x, peak_value[i], standard_dev[i])
+  }
+
+  elems_total <- apply(elems_matrix, MARGIN = 1, sum, na.rm=FALSE)
+  return(- sum((target - elems_total)^2))
+}
+```
+
+
+```{r}
+
+
+
+loss_n_peak <- function(x, n_peak=2){
+  
+  relative_area <- c(rel_area1, rel_area2, rel_area3, rel_area4, rel_area5)
+  standard_dev <- c(std_dev1, std_dev2, std_dev3, std_dev4, std_dev5)
+  peak_value <- c(peak1, peak2, peak3, peak4, peak5)
+  
+  elems_matrix <- matrix(data = rep(NA, n_peaks*length(target)), ncol = n_peaks)
+  
+  for (i in 1:n_peaks){
+    elems_matrix[,i] <- relative_area[i]*dnorm(x, peak_value[i], standard_dev[i])
+  }
+
+  elems_total <- apply(elems_matrix, MARGIN = 1, sum, na.rm=FALSE)
+  return(- sum((target - elems_total)^2))
+}
+```
+
+
+```{r}
+func_list = list(loss_1_peak, loss_2_peak, loss_3_peak, loss_4_peak, loss_multi_peak)
+
+for (i in 1:length(func_list)){
+  
+  print(func_list[i])
+}
+
+```
+
+
+
+
+```{r}
+run_optim <- function(y_test, vals, n_peaks = 5, seed=1, loss = loss_multi_peak){
+
+  set.seed(seed)
+  results <- GA::ga(type = "real-valued", 
+                fitness = function(x) loss(x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[12], x[13], x[14], x[15], target = y_test,  vals, n_peaks = n_peaks),
+                lower = rep(0, 3*n_peaks),
+                upper = rep(1000,3*n_peaks),
+                popSize = 50, 
+                pcrossover = 0.8,
+                pmutation = 0.1, 
+                maxiter = 100,
+                run = 50,
+                names = c(paste0(rep("rel_area",n_peaks),1:n_peaks), paste0(rep("std_dev",n_peaks),1:n_peaks), paste0(rep("peak",5),1:n_peaks)),
+                parallel = TRUE,
+                optim = TRUE,
+                monitor = FALSE,
+                seed = seed
+                )
+  
+  optim_out <- list(solution = data.frame(results@solution),
+                    optim_results = results)
+  
+  return(optim_out)
+}
+
+res <- run_optim(y_test = y_pred, vals = x, n_peaks = 5, loss = loss_multi_peak)
+
+```
+
+```{r}
+run_ga <- function(y_test, vals, n_peaks = 5, seed=1, loss = loss_multi_peak){
+
+  set.seed(seed)
+  ga_results <- optim(par = c(rep(100, n_peaks), rep(50, n_peaks), rep(500, n_peaks)),
+                   fn = function(x) loss_multi_peak(x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[12], x[13], x[14], x[15], target = y_test,  vals, n_peaks = n_peaks),
+                   lower = rep(0, 3*n_peaks),
+                   upper = rep(1000,3*n_peaks),
+                   method = "L-BFGS-B"
+                )
+  
+  optim_out <- list(solution = data.frame(ga_results@solution),
+                    optim_results = ga_results)
+  
+  return(optim_out)
+}
+
+res <- run_optim(y_test = y_pred, vals = x, n_peaks = 5, loss = loss_multi_peak)
+
+```
+
+```{r}
+run_optim <- function(y_test, vals, n_peaks = 5, seed=1, loss = loss_multi_peak, init_params = NULL, lower = rep(0, 3*n_peaks), upper = rep(1000,3*n_peaks), method = "L-BFGS-B", maxit=500){
+
+  set.seed(seed)
+  if (is.null(init_params)) { init_params <- c(runif(n_peaks, 0, 500), runif(n_peaks, 5, 100), runif(n_peaks, 1, 1000)) }
+  
+  optim_results <- optim(par = init_params,
+                   fn = function(x) -loss_multi_peak(x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[12], x[13], x[14], x[15], target = y_test,  vals, n_peaks = n_peaks),
+                   lower = lower,
+                   upper = upper,
+                   method = method,
+                   control = list(maxit = maxit)
+                )
+  
+  
+  solution = optim_results$par
+  names(solution) <- c(paste0(rep("rel_area",n_peaks),1:n_peaks), paste0(rep("std_dev",n_peaks),1:n_peaks), paste0(rep("peak",5),1:n_peaks))
+  
+  optim_out <- list(solution = solution,
+                    score = optim_results$value)
+  
+  return(optim_out)
+}
+
+res <- run_optim(y_test = y_pred, vals = x, n_peaks = 5, loss = loss_multi_peak)
+res
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -14,49 +14,236 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r}
-## "wild" function , global minimum at about -15.81515
-fw <- function (x, y){
-  y + 10*sin(0.3*x*y)*sin(1.3*x^2) + 0.00001*x^4 + 0.2*x+80*y
+run_optim <- function(target, vals, n_peaks = 5, seed=1, loss = loss_n_peak, init_params = NULL, lower = rep(0.0, 3*n_peaks), upper = rep(1000,3*n_peaks), method = "L-BFGS-B", maxit=500){
+
+  set.seed(seed)
+  if (is.null(init_params)) { init_params <- c(runif(n_peaks, 0, 500), runif(n_peaks, 5, 1000), runif(n_peaks, 1, 1000)) }
+  
+  optim_results <- optim(par = init_params,
+                   fn = function(x) loss(x),
+                   # target=y_test, 
+                   # vals=x, 
+                   # n_peaks = n_peaks,
+                   lower = lower,
+                   upper = upper,
+                   method = method,
+                   control = list(maxit = maxit)
+                )
+  
+  
+  solution = optim_results$par
+  names(solution) <- c(paste0(rep("rel_area",n_peaks),1:n_peaks), paste0(rep("std_dev",n_peaks),1:n_peaks), paste0(rep("peak",5),1:n_peaks))
+  
+  optim_out <- list(solution = solution,
+                    score = optim_results$value)
+  
+  return(optim_out)
 }
 
-res <- optim(par = c(10,10), fn = function(x) fw(x[1], x[2]), lower=c(-100,-100), upper=c(100,100), method = "L-BFGS-B")
+res <- run_optim(target = y_pred, vals = bins, n_peaks = 3, loss = loss_n_peak)
 res
 ```
 
+```{r}
+# loss_n_peak_exp <- function(x, x_target, y_target, n_peaks){
+#   
+#   tot_area_y_target <- pracma::trapz(vals, y_target)
+#   elems_matrix <- matrix(data = rep(NA, n_peaks*length(y_target)), ncol = n_peaks)
+#   
+#   for (i in 1:n_peaks){
+#     elems_matrix[,i] <- fit_peak(vals, center=x[(2*i)+2], sdt_dev=x[i+1], area =x[i])
+#   }
+# 
+#   elems_total <- apply(elems_matrix, MARGIN = 1, sum, na.rm=FALSE)
+#   tot_area_vec <- pracma::trapz(vals, elems_total)
+#   
+#   err <- sum((y_target - elems_total)^2)
+#   
+#   if (tot_area_vec > tot_area_y_target){
+#     
+#     return( Inf )
+#     
+#   } else { return(err) }
+# }
+```
+
 
 
 ```{r}
-loss <- function(x){
-  x1 <- x[1]
-  x2 <- x[2]
-  
-  y <- x1^2 + x2^3
-  
-  y
-  
-}
 
-optim(par=c(100, 100), fn = loss, lower= c(-100, -100), upper = c(100,100))
+# --------------------------------------------------------------------------
+
+n_peaks = 3
+y_target = y_test
+x_target = bins
+y_pred_params = y_test_params
+
+  elems_matrix <- matrix(data = rep(0, n_peaks*length(y_target)), ncol = n_peaks)
+
+  for (i in 1:n_peaks){
+    elems_matrix[,i] <- fit_peak(x_vals = x_target, center=y_pred_params[(2*n_peaks)+i], sdt_dev=y_pred_params[n_peaks+i], area =y_pred_params[i])
+    if (verbose){
+      print(paste0("Peak ",i, " - area: ", round(y_pred_params[i],4)," | ", "std dev: ", round(y_pred_params[n_peaks+i],2)," | ", "center: ", round(y_pred_params[(2*n_peaks)+i],2))) 
+      }
+  }
+
+  elems_total <- apply(elems_matrix, MARGIN = 1, sum, na.rm=FALSE)
+  sum((y_target - elems_total)^2)
+  
+  
+loss_n_peak(y_pred_params = y_test_params, x_target = bins, y_target = y_test, n_peaks = 3)
+loss_n_peak(y_pred_params = y_test_params_actual, x_target = bins, y_target = y_test, n_peaks = 3)
+
+tolerance <- 0.0000005
 ```
 
 
 ```{r}
-xx=c(1,2,3,4,5)
-zz=c(3,4,2,2,1)
-yy=c(30,40,22,33,40)
+options(scipen = 1) 
+library(tictoc)
 
-funk=function(param,x,y,z){
-  
-  a=rep(param[1],5)
-  b=param[2]
-  d=param[3]
-  
-  fit=sum((y-(a+b*x+z*d))^2)
-  return(fit)
-}
+trapz(bins, y_test)
 
-optim(par=c(1,1,1), fn=funk, x=xx, y=yy, z=zz) 
+n_peaks = 3
+lower_boundaries <- lower_ranges(x = bins, y = y_test, n_peaks = n_peaks, q_peak = 0.01)
+upper_boundaries <- upper_ranges(x = bins, y = y_test, n_peaks = n_peaks, q_peak = 0.99)
+# init_params <- optim_init_params(x = bins, y = y_test, n_peaks = n_peaks)
+init_params <- c(rep(trapz(bins, y_test)/n_peaks,3), runif(n_peaks, 50, 1000), runif(n_peaks, 200, 900))
+optim_init_params(x = bins, y = y_test, n_peaks = 3)
+
+names(init_params) <- c(paste0(rep("rel_area",n_peaks),1:n_peaks), paste0(rep("std_dev",n_peaks),1:n_peaks), paste0(rep("peak",n_peaks),1:n_peaks))
+
+optim_results <- optim(par = optim_init_params(x = bins, y = y_test, n_peaks = 3),
+                       fn = loss_n_peak,
+                       y_target = y_test,
+                       x_target = bins,
+                       n_peaks = n_peaks,
+                       lower = lower_boundaries,
+                       upper = upper_boundaries,
+                       method = "L-BFGS-B",
+                       control = list(maxit = 5000,
+                                      factr = 0.00000001
+                                      )
+                       )
+
+y_test_params
+optim_results
 ```
+
+```{r}
+options(scipen = 999) 
+library(tictoc)
+library(DEoptim)
+
+trapz(bins, y_test)
+
+n_peaks = 3
+lower_boundaries <- lower_ranges(x = bins, y = y_test, n_peaks = n_peaks, q_peak = 0.01)
+upper_boundaries <- upper_ranges(x = bins, y = y_test, n_peaks = n_peaks, q_peak = 0.99)
+# init_params <- optim_init_params(x = bins, y = y_test, n_peaks = n_peaks)
+init_params <- c(rep(trapz(bins, y_test)/n_peaks,3), runif(n_peaks, 50, 1000), runif(n_peaks, 200, 1000))
+names(init_params) <- c(paste0(rep("rel_area",n_peaks),1:n_peaks), paste0(rep("std_dev",n_peaks),1:n_peaks), paste0(rep("peak",n_peaks),1:n_peaks))
+
+
+DE_results <- DEoptim::DEoptim(fn = loss_n_peak_exp,
+                      y_target = y_test,
+                      x_target = bins,
+                      n_peaks = n_peaks,
+                      lower = lower_boundaries,
+                      upper = upper_boundaries,
+                      control = DEoptim.control(NP = 50, itermax = 1000, CR = 0.5, trace = 100, strategy=3, trace=0)
+                      )
+
+DE_sol <- DE_results$optim$bestmem
+DE_score <- DE_results$optim$bestval
+
+DE_df <- solution_df <- process_solution(DE_sol)
+plot_deconvoluted(solution_df=DE_df, x_vals=bins, y_vals=y_test)
+```
+
+
+```{r}
+trapz(bins, y_test)
+trapz(bins, solution_df$curve[[1]]) 
+trapz(bins, solution_df$curve[[2]])
+trapz(bins, solution_df$curve[[3]])
+```
+
+
+```{r}
+plot(bins, y_test, type="l")
+lines(bins, solution_df$curve[[1]], type="l", col="green", lty=2)
+lines(bins, solution_df$curve[[2]], type="l", col="red", lty=2)
+lines(bins, solution_df$curve[[3]], type="l", col="blue", lty=2)
+lines(bins, solution_df$curve[[1]]+solution_df$curve[[2]]+solution_df$curve[[3]], type="l", col="grey", lty=2)
+```
+
+```{r}
+ggplot() +
+  geom_polygon(data = solution_df %>% tidyr::unnest(cols=c("curve", "x_vals")), mapping = aes(x=x_vals, y=curve, fill=factor(ID)), alpha=0.2) +
+  geom_vline(data = solution_df %>% tidyr::unnest(cols=c("curve", "x_vals")), mapping = aes(xintercept = peak, col=factor(ID)), alpha=0.2, size=0.75) +
+  geom_line(data=df_transp, aes(x=x_vals, y=y_test, ID=factor(0)), fill="black", col="black", alpha=0.5) +
+  theme_bw() +
+  labs(x="Size", y="Value", fill="Peak") +
+  scale_fill_brewer(type = "qual", palette = "Set1") + scale_color_brewer(type = "qual", palette = "Set1")
+```
+
+```{r}
+DE_df <- solution_df <- process_solution(DE_sol)
+plot_deconvoluted(solution_df=DE_df, x_vals=bins, y_vals=y_test)
+```
+
+
+```{r}
+max_peaks <- 3
+df_transp
+ggplot() +
+  geom_polygon(data = solution_tbl %>% unnest(curve, bins), mapping = aes(x=bins, y=curve, fill=factor(ID)), alpha=0.2) +
+  # geom_vline(data = solution_tbl %>% unnest(curve, bins), mapping = aes(xintercept = peak, fill=factor(ID)), alpha=0.2) +
+  geom_line(data=df_transp, aes(x=bins, y=y_test, ID=factor(0)), fill="black", col="black", alpha=0.5) +
+  geom_polygon(data=df_transp, aes(x=bins, y=y_pred, ID=factor(0)), fill="black", col="black", alpha=0.05) +
+  theme_bw() +
+  labs(x="Size", y="Value", fill="Peak") +
+  scale_fill_brewer(type = "qual", palette = "Set1")
+```
+
+
+
+```{r}
+library(pracma)
+
+solution_tbl_spr <- solution_tbl %>% 
+  unnest(cols=c("curve", "bins")) %>% 
+  dplyr::select(ID, bins, curve) %>% 
+  spread(key="ID", value = "curve")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
