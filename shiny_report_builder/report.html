@@ -9,6 +9,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
+<meta name="author" content="Report Builder" />
 
 
 <title>Generated report</title>
@@ -362,21 +363,19 @@ summary {
 
 
 <h1 class="title toc-ignore">Generated report</h1>
+<h4 class="author">Report Builder</h4>
+<h4 class="date">Created on Sunday, 28/06/2020 at 22:30</h4>
 
 </div>
 
 
-<pre class="r"><code>df</code></pre>
-<pre><code>## function (x, df1, df2, ncp, log = FALSE) 
-## {
-##     if (missing(ncp)) 
-##         .Call(C_df, x, df1, df2, log)
-##     else .Call(C_dnf, x, df1, df2, ncp, log)
-## }
-## &lt;bytecode: 0x0000000008f35848&gt;
-## &lt;environment: namespace:stats&gt;</code></pre>
-<pre><code>plot(x = 1:length(params$df[1,]),
-     y = params$df[1,])</code></pre>
+<pre class="r"><code># try(print(format))</code></pre>
+<p>date</p>
+<pre class="r"><code># print(params$df)</code></pre>
+<pre class="r"><code># plot(x = 1:length(params$df()[1,]),
+#      y = params$df()[1,])</code></pre>
+<pre class="r"><code>format(Sys.time(), &quot;%d/%m/%Y at %H:%M&quot;)</code></pre>
+<pre><code>## [1] &quot;28/06/2020 at 22:30&quot;</code></pre>
 
 
 

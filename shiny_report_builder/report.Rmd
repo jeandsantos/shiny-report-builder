@@ -1,5 +1,7 @@
 ---
 title: "Generated report"
+author: "Report Builder"
+date: "Created on `r format(Sys.time(), '%A, %d/%m/%Y at %H:%M')`"
 output: html_document
 params:
   df: NA
@@ -14,10 +16,15 @@ params:
 
 
 ```{r}
-print(params$df)
+# print(params$df)
 ```
 
 ```{r}
 # plot(x = 1:length(params$df()[1,]),
 #      y = params$df()[1,])
 ```
+
+```{r}
+format(Sys.time(), "%d/%m/%Y at %H:%M")
+```
+
