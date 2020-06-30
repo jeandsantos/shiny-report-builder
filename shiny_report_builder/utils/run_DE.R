@@ -1,42 +1,9 @@
----
-title: "Examples"
-author: "Jean Dos Santos"
-date: "21/06/2020"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-
-```{r}
-source(file = "utils/source_dir.R")
-source_dir("utils/", trace = FALSE)
-```
-
-
-```{r}
-#import data
-df_wh <- read_csv("data/df_wide_wh.csv", col_names = TRUE)
-df_wh
-```
-
-
-```{r}
-x_vals <- as.numeric(colnames(df_wh)[-1])
-y_vals <- df_wh[1,-1] %>% as.matrix() %>% as.vector()
-
-percentile_summary(x = x_vals, y = y_vals, q = c(0.1, 0.5, 0.90, 0.99), return_df = TRUE)
-```
-
-```{r}
 run_DE <- function(x_vals, target, n_peaks = 3, seed=1, loss = loss_n_peak_exp, maxit=1000, pop_size=100, p_crossover=0.5, strategy=3, verbosity=0){
-
+  
   set.seed(seed)
   lower_boundaries <- lower_ranges(x = x_vals, y = target, n_peaks = n_peaks, q_peak = 0.01)
   upper_boundaries <- upper_ranges(x = x_vals, y = target, n_peaks = n_peaks, q_peak = 0.99)
-
+  
   optim_results <- DEoptim::DEoptim(fn = loss,
                                     y_target = y_test, 
                                     x_target = bins,
@@ -44,51 +11,9 @@ run_DE <- function(x_vals, target, n_peaks = 3, seed=1, loss = loss_n_peak_exp, 
                                     lower = lower_boundaries,
                                     upper = upper_boundaries,
                                     control = DEoptim.control(NP = pop_size, itermax = maxit, CR = p_crossover, trace = verbosity*100, strategy=as.integer(strategy)))
-
+  
   optim_out <- list(solution = optim_results$optim$bestmem,
                     score = optim_results$optim$bestval)
   
   return(optim_out)
 }
-```
-
-```{r}
-DE_sol <- run_DE(x_vals = x_vals, target = y_vals, n_peaks = 3)
-DE_sol
-
-DE_df <- process_solution(sol_vec = DE_sol$solution, x_vals = x_vals, names_vec = NULL)
-plot_deconvoluted_poly(solution_df=DE_df, x_vals=bins, y_vals=y_test)
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

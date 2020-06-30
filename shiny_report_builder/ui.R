@@ -20,8 +20,8 @@ shinyUI(fluidPage(
                                  ".csv")),
             
             # Input: Checkbox if file has header ----
-            checkboxInput(inputId = "contains_header", 
-                          label = "Files container header", 
+            checkboxInput(inputId = "contains_header",
+                          label = "Files container header",
                           value = TRUE),
             
             # Input: Select separator ----

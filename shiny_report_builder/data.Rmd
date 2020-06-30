@@ -44,10 +44,21 @@ y_test_params_actual <- c(ra1,ra2,ra3,40,50,75,400,500,750)
 names(y_test_params) <- names(y_test_params_actual) <- param_names(n_peaks_test)
 
 df_transp <- data.frame(bins,y_test)
-write.csv(df_transp, file = "data_transposed.csv")
+write_csv(df_transp, "data/data_transposed.csv")
 
 tolerance <- 0.0000005
 ```
+
+
+```{r}
+df_wide_nh <- data.frame(bins,y_test) %>% t() %>% data.frame() %>% rownames_to_column(var = "ID")
+df_wide_wh <- data.frame(y_test) %>% t() %>% data.frame() %>% rownames_to_column(var = "ID")
+colnames(df_wide_wh) <- c("ID", bins)
+
+write_csv(x = df_wide_nh, "data/df_wide_nh.csv", append = FALSE, na = "")
+write_csv(x = df_wide_wh, "data/df_wide_wh.csv", append = FALSE, na = "")
+```
+
 
 ```{r}
 data_range <- range(bins)

@@ -5,6 +5,11 @@ library(tidyverse)
 library(pracma)
 library(knitr)
 
+# Import all functions from utils
+source(file = "utils/source_dir.R")
+source_dir("utils/", trace = FALSE)
+
+
 report_path <- tempfile(fileext = ".Rmd")
 file.copy("report.Rmd", report_path, overwrite = TRUE)
 
@@ -18,21 +23,16 @@ shinyServer(function(input, output, session) {
         
         if (is.null(inFile)) return(NULL)
         
-        data <- read.csv(inFile$datapath, header = input$contains_header)
+        data <- readr::read_csv(inFile$datapath, col_names = input$contains_header)
         data
     })
     
     # Print input table
     # output$contents <- renderTable({ df() })
 
-    summary_stats <- reactive({
+    summary_stats <- eventReactive(eventExpr = input$run_analysis, {
         
-        data.frame(
-            mean = mean(as.numeric(df()[1,]), na.rm = TRUE),
-            median = median(as.numeric(df()[1,]), na.rm = TRUE),
-            min = min(as.numeric(df()[1,]), na.rm = TRUE),
-            max = max(as.numeric(df()[1,]), na.rm = TRUE)
-        ) %>% round(4)
+        percentile_summary(x = x_vals, y = y_vals, q = c(0.1, 0.5, 0.90, 0.99), return_df = TRUE)
     
     })
     
@@ -42,7 +42,7 @@ shinyServer(function(input, output, session) {
         # colnames = c("Mean", "Min", "Max"),
         extensions = c("Buttons","FixedColumns", "Scroller", "KeyTable"), 
         options = list(
-            pageLength = 3,
+            pageLength = 15,
             deferRender = F,
             dom = "t",
             # buttons = c("copy", "csv"),
