@@ -2,7 +2,9 @@
 if (!require(ggplot2)==TRUE) {install.packages("ggplot2"); require(ggplot2, quietly = TRUE)} else {require(ggplot2, quietly = TRUE)}
 if (!require(tidyr)==TRUE) {install.packages("tidyr"); require(tidyr, quietly = TRUE)} else {require(tidyr, quietly = TRUE)}
 
-plot_deconvoluted_poly <- function(solution_df, x_vals, y_vals, unnest_cols = c("x_vals", "curve"), alpha=0.5, linewidth=0.5, x_lab="x", y_lab="PDF", col_lab="Peak", title=NULL, subtitle=NULL, ...){
+plot_deconvoluted_poly <- function(solution_df, x_vals, y_vals, unnest_cols = c("x_vals", "curve"), 
+                                   poly_alpha=0.5, line_alpha=0.8, linewidth=0.5, 
+                                   x_lab="x", y_lab="PDF", col_lab="Peak", title=NULL, subtitle=NULL, palette="Set1", ...){
   #' Plot Deconvoluted Peaks
   #'
   #' Plots deconvoluted peaks together with original data
@@ -18,11 +20,11 @@ plot_deconvoluted_poly <- function(solution_df, x_vals, y_vals, unnest_cols = c(
   
   g <- ggplot() +
     # geom_vline(data = sol_df, mapping = aes(xintercept = peak, col=factor(ID)), alpha=0.5, size=1) +
-    geom_polygon(data = sol_df, mapping = aes(x=x_vals, y=curve, fill=factor(ID)), size=0, alpha=alpha) +
-    geom_line(data = df_transp, mapping = aes(x=x_vals, y=y_vals), col="black", alpha=0.5, size=linewidth) +
-    geom_line(data = df_transp, mapping = aes(x=x_vals, y=y_pred), col="grey50", alpha=0.5, size=linewidth) +
+    geom_polygon(data = sol_df, mapping = aes(x=x_vals, y=curve, fill=factor(ID)), size=0, alpha=poly_alpha) +
+    geom_line(data = df_transp, mapping = aes(x=x_vals, y=y_vals), col="black", alpha=line_alpha, size=linewidth) +
+    geom_line(data = df_transp, mapping = aes(x=x_vals, y=y_pred), col="grey50", alpha=line_alpha, size=linewidth) +
     labs(x=x_lab, y=y_lab, fill=col_lab, title=title, subtitle = subtitle) +
-    scale_fill_brewer(type = "qual", palette = "Set1") + # scale_color_brewer(type = "qual", palette = "Set1") + 
+    scale_fill_brewer(type = "qual", palette = palette) + # scale_color_brewer(type = "qual", palette = "Set1") + 
     theme_bw() +
     theme(...)
   

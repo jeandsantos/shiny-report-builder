@@ -34,7 +34,7 @@ process_solution <- function(sol_vec, x_vals, names_vec=NULL){
   
   solution_df <- tibble::tibble(peak, rel_area, std_dev, curve = vec_list, x_vals = x_list) %>% 
     dplyr::arrange(peak) %>% 
-    dplyr::mutate(ID = paste0("Peak_",1:n_peaks), 
+    dplyr::mutate(ID = paste0("Peak ",1:n_peaks), 
                   perc_total_area = (rel_area/sum(rel_area, na.rm = TRUE))*100) %>% 
     dplyr::select(ID, peak, everything())
   

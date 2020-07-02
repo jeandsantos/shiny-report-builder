@@ -1,5 +1,6 @@
 ---
 title: "Generated report"
+subtitle: "Subtitle of the report"
 author: "Report Builder"
 date: "Created on `r format(Sys.time(), '%A, %d/%m/%Y at %H:%M')`"
 output: html_document

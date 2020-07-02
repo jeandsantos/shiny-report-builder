@@ -17,7 +17,7 @@ file.copy("report.Rmd", report_path, overwrite = TRUE)
 shinyServer(function(input, output, session) {
     
     # import data
-    df <- eventReactive(eventExpr = input$run_analysis, {
+    df_wh <- eventReactive(eventExpr = input$run_analysis, {
         
         inFile <- input$file1
         
@@ -27,38 +27,82 @@ shinyServer(function(input, output, session) {
         data
     })
     
-    # Print input table
-    # output$contents <- renderTable({ df() })
-
-    summary_stats <- eventReactive(eventExpr = input$run_analysis, {
+    # observeEvent(eventExpr = input$run_analysis, { print(df_wh()) })
+    
+    # observeEvent(eventExpr = input$run_analysis, { print(as.numeric(colnames(df_wh())[-1])) })
+    # 
+    # observeEvent(eventExpr = input$run_analysis, { print(df_wh()[1, -1] %>% as.matrix() %>% as.vector()) })
+    # 
+    # observeEvent(eventExpr = input$run_analysis, { print(length(df_wh()[1, -1] %>% as.matrix() %>% as.vector()) == as.numeric(colnames(df_wh())[-1])) })
+    
+    observeEvent(eventExpr = input$run_analysis, { 
         
-        percentile_summary(x = x_vals, y = y_vals, q = c(0.1, 0.5, 0.90, 0.99), return_df = TRUE)
+        x_vals <- as.numeric(colnames(df_wh())[-1])
+        y_vals <- df_wh()[1, -1] %>% as.matrix() %>% as.vector()
+        print(x_vals)
+        print(y_vals)
+        
+        summary_stats <- percentile_summary(x = x_vals, y = y_vals, q = c(0.1, 0.5, 0.90, 0.95, 0.99), return_df = TRUE)
+        print(summary_stats)
+        
+        output$plot_line <- renderPlot(
+            
+            plot(x = x_vals,
+                 y = y_vals,
+                 type="l",
+                 xlab = "x",
+                 ylab = "y",
+                 main = "Distribution of values")
+        )
+        
+        output$quantile_tbl <- DT::renderDataTable(
+            DT::datatable(summary_stats,
+                          # colnames = c(),
+                          extensions = c("Buttons","FixedColumns", "Scroller", "KeyTable"),
+                          options = list(
+                              pageLength = 15,
+                              deferRender = F,
+                              dom = "t",
+                              # buttons = c("copy", "csv"),
+                              autoWidth = TRUE,
+                              keys = TRUE)
+            )
+        )
+    })
+        
+        observeEvent(eventExpr = input$run_deconvolution, {
+        
+        x_vals <- as.numeric(colnames(df_wh())[-1])
+        y_vals <- df_wh()[1, -1] %>% as.matrix() %>% as.vector()
+            
+        optim_out <- run_DE(x_vals = x_vals, target = y_vals, n_peaks = 3)
+        optim_df <- process_solution(sol_vec = optim_out$solution, x_vals = x_vals, names_vec = NULL)
+        optim_tbl <- summary_table(df = optim_df)
+        
+        output$optim_sol_table <- DT::renderDataTable(
+            DT::datatable(optim_tbl,
+                          # colnames = c(),
+                          extensions = c("Buttons","FixedColumns", "Scroller", "KeyTable"),
+                          options = list(
+                              pageLength = 15,
+                              deferRender = F,
+                              dom = "t",
+                              # buttons = c("copy", "csv"),
+                              autoWidth = TRUE,
+                              keys = TRUE)
+            )
+        )
+        
+        
+        output$deconv_plot <- renderPlot(
+
+        plot_deconvoluted_poly(solution_df=optim_df, x_vals=x_vals, y_vals=y_vals)
+        
+        )
     
     })
-    
-    
-    output$input_DT_data_table <- DT::renderDataTable(
-        DT::datatable(summary_stats(),
-        # colnames = c("Mean", "Min", "Max"),
-        extensions = c("Buttons","FixedColumns", "Scroller", "KeyTable"), 
-        options = list(
-            pageLength = 15,
-            deferRender = F,
-            dom = "t",
-            # buttons = c("copy", "csv"),
-            autoWidth = TRUE,
-            keys = TRUE)
-        )
-    )
-    
-    output$plot_line <- renderPlot(
-        plot(x = 1:length(df()[1,]),
-             y = df()[1,], type="l", 
-             xlab = "x",
-             ylab = "y",
-             main = "Distribution of values")
-    )
-    
+
+
     # Downloadable csv of selected dataset ----
     output$downloadData <- downloadHandler(
         filename = "export_data.csv",
@@ -93,28 +137,4 @@ shinyServer(function(input, output, session) {
     )
     
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

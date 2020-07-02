@@ -48,23 +48,30 @@ shinyUI(fluidPage(
             # tags$hr(),
             
             actionButton(inputId = "run_analysis", label = "Run Analysis", width = "170px", icon = icon("bullseye")), br(),br(),
+            actionButton(inputId = "run_deconvolution", label = "Perform Deconvolution", width = "170px", icon = icon("bullseye")), br(),br(),
             
             # Button
             downloadButton("downloadData", "Export Data"), br(), br(),
             downloadButton('downloadReport', "Generate Report"),
-            # textInput(inputId = "report_author", label = "Report Author", value = "")
+            # textInput(inputId = "report_author", label = "Report Author", value = ""),
+            br(),
             
-            
-        ),
+            width = 3),
         
         # Main panel for displaying outputs ----
         mainPanel(
             
             # Output: Data file ----
-            DT::dataTableOutput(outputId = "input_DT_data_table"),
-            shiny::plotOutput(outputId = "plot_line")
+            DT::dataTableOutput(outputId = "quantile_tbl"),
+            br(),
+            shiny::plotOutput(outputId = "plot_line"),
+            br(), hr(),
+            DT::dataTableOutput(outputId = "optim_sol_table"),
+            br(),
+            shiny::plotOutput(outputId = "deconv_plot"),
+            br(),
             
-        )
+            width = 9)
         
     )
 )
